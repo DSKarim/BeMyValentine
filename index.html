@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veux‑tu être ma Valentine&nbsp;?</title>
+    <!-- Import a romantic cursive and serif font reminiscent of the Regency era -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+    <style>
+        /* Base styles for the page */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Playfair Display', serif;
+            background: linear-gradient(135deg, #FBE0E6 0%, #D4E3F5 100%);
+            color: #5a415c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Container for the content */
+        .card {
+            position: relative;
+            background-color: rgba(255, 255, 255, 0.85);
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 90%;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* Decorative header image */
+        .banner img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+        }
+
+        h1 {
+            font-family: 'Dancing Script', cursive;
+            font-size: 2.2rem;
+            margin: 20px 0 10px;
+            color: #b37ab4;
+        }
+
+        p.subtitle {
+            font-size: 1rem;
+            margin-bottom: 20px;
+            color: #7f6a7e;
+        }
+
+        /* Buttons container */
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            cursor: pointer;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 50px;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+        }
+
+        .btn-yes {
+            background-color: #f7c4d0;
+            color: #6c3a6c;
+        }
+
+        .btn-yes:hover {
+            background-color: #fddde8;
+        }
+
+        .btn-no {
+            background-color: #d3d9ef;
+            color: #4c5476;
+        }
+
+        .btn-no:hover {
+            background-color: #e5e9f8;
+        }
+
+        /* Confetti hearts container */
+        #confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 100;
+        }
+
+        /* Heart elements */
+        .heart {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #f480a1;
+            transform: rotate(-45deg);
+            animation: fall 5s linear infinite;
+        }
+        .heart:before,
+        .heart:after {
+            content: "";
+            position: absolute;
+            top: 0;
+            width: 20px;
+            height: 20px;
+            background-color: inherit;
+            border-radius: 50%;
+        }
+        .heart:before {
+            left: -10px;
+        }
+        .heart:after {
+            left: 10px;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100px) rotate(-45deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(110vh) rotate(-45deg);
+                opacity: 0;
+            }
+        }
+
+        /* Celebration message after clicking Yes */
+        #celebration {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            z-index: 50;
+        }
+        #celebration h2 {
+            font-family: 'Dancing Script', cursive;
+            font-size: 2.5rem;
+            color: #b37ab4;
+            margin-bottom: 20px;
+        }
+        #celebration p {
+            font-size: 1.2rem;
+            color: #7f6a7e;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="banner">
+            <!-- Pastel Bridgerton-inspired image generated with AI -->
+            <img src="./4f41f439-6bda-4481-b5df-2184142c9f9c.png" alt="Bordure pastel florale et coeurs" />
+        </div>
+        <h1>Veux‑tu être ma Valentine&nbsp;?</h1>
+        <p class="subtitle">Notre petite princesse et moi avons une question très importante pour toi…</p>
+        <div class="buttons" id="button-container">
+            <button class="btn btn-yes" id="yes-button">Oui</button>
+            <button class="btn btn-no" id="no-button">Non</button>
+        </div>
+        <!-- Celebration overlay -->
+        <div id="celebration">
+            <h2>Félicitations&nbsp;!</h2>
+            <p>Tu as dit oui&nbsp;! Nous t’aimons plus que tout. ❤️</p>
+        </div>
+    </div>
+    <!-- Confetti hearts container -->
+    <div id="confetti"></div>
+    <script>
+        // 'Non' button behavior: flee the cursor
+        const noButton = document.getElementById('no-button');
+        const yesButton = document.getElementById('yes-button');
+        const buttonContainer = document.getElementById('button-container');
+        const celebration = document.getElementById('celebration');
+        const confettiContainer = document.getElementById('confetti');
+
+        // Move the 'Non' button away when mouse enters its area
+        noButton.addEventListener('mouseover', function(event) {
+            // Random offsets within the card boundaries
+            const containerRect = buttonContainer.getBoundingClientRect();
+            const maxX = containerRect.width - noButton.offsetWidth;
+            const maxY = containerRect.height - noButton.offsetHeight;
+            const randomX = Math.floor(Math.random() * maxX) - maxX / 2;
+            const randomY = Math.floor(Math.random() * 60) - 30; // small vertical offset
+            noButton.style.transform = `translate(${randomX}px, ${randomY}px)`;
+        });
+
+        // Reset 'Non' button position when mouse leaves button container
+        buttonContainer.addEventListener('mouseleave', function() {
+            noButton.style.transform = '';
+        });
+
+        // 'Yes' button behavior: show celebration with confetti hearts
+        yesButton.addEventListener('click', function() {
+            // Hide buttons
+            buttonContainer.style.display = 'none';
+            // Show celebration message
+            celebration.style.display = 'flex';
+            // Launch confetti hearts
+            launchHearts();
+        });
+
+        function launchHearts() {
+            // Create hearts at random intervals
+            const heartInterval = setInterval(() => {
+                const heart = document.createElement('div');
+                heart.classList.add('heart');
+                // Randomize heart color among pastel shades
+                const colors = ['#F7ACC0', '#FBC8D6', '#E6C3F7', '#C7DDF9', '#FDE2E4'];
+                heart.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                const size = Math.random() * 20 + 10; // size between 10 and 30px
+                heart.style.width = `${size}px`;
+                heart.style.height = `${size}px`;
+                heart.style.left = `${Math.random() * 100}%`;
+                heart.style.animationDuration = `${Math.random() * 2 + 3}s`;
+                confettiContainer.appendChild(heart);
+                // Remove heart after animation ends
+                setTimeout(() => {
+                    confettiContainer.removeChild(heart);
+                }, 5000);
+            }, 200);
+            // Stop after a certain time
+            setTimeout(() => clearInterval(heartInterval), 8000);
+        }
+    </script>
+</body>
+</html>
