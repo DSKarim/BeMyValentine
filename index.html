@@ -19,37 +19,39 @@
             align-items: center;
             min-height: 100vh;
             overflow-x: hidden;
+            padding: 24px;
         }
 
         /* Container for the content */
         .card {
             position: relative;
             background-color: rgba(255, 255, 255, 0.85);
-            border-radius: 12px;
+            border-radius: 18px;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
+            max-width: 640px;
             width: 90%;
-            padding: 20px;
+            padding: 28px;
             text-align: center;
+            backdrop-filter: blur(6px);
         }
 
         /* Decorative header image */
         .banner img {
             max-width: 100%;
             height: auto;
-            border-radius: 12px;
+            border-radius: 14px;
         }
 
         h1 {
             font-family: 'Dancing Script', cursive;
-            font-size: 2.2rem;
-            margin: 20px 0 10px;
+            font-size: 2.4rem;
+            margin: 18px 0 12px;
             color: #b37ab4;
         }
 
         p.subtitle {
-            font-size: 1rem;
-            margin-bottom: 20px;
+            font-size: 1.05rem;
+            margin-bottom: 24px;
             color: #7f6a7e;
         }
 
@@ -58,7 +60,10 @@
             display: flex;
             justify-content: center;
             gap: 30px;
-            margin-top: 20px;
+            margin-top: 10px;
+            min-height: 80px;
+            position: relative;
+            align-items: center;
         }
 
         .btn {
@@ -68,6 +73,8 @@
             border: none;
             border-radius: 50px;
             transition: transform 0.3s ease, background-color 0.3s ease;
+            font-family: inherit;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
         }
 
         .btn-yes {
@@ -77,15 +84,22 @@
 
         .btn-yes:hover {
             background-color: #fddde8;
+            transform: translateY(-2px);
         }
 
         .btn-no {
             background-color: #d3d9ef;
             color: #4c5476;
+            position: relative;
         }
 
         .btn-no:hover {
             background-color: #e5e9f8;
+        }
+
+        .btn:focus-visible {
+            outline: 3px solid rgba(179, 122, 180, 0.4);
+            outline-offset: 3px;
         }
 
         /* Confetti hearts container */
@@ -149,8 +163,9 @@
             width: 100%;
             height: 100%;
             background-color: rgba(255, 255, 255, 0.9);
-            border-radius: 12px;
+            border-radius: 18px;
             z-index: 50;
+            padding: 24px;
         }
         #celebration h2 {
             font-family: 'Dancing Script', cursive;
@@ -161,6 +176,28 @@
         #celebration p {
             font-size: 1.2rem;
             color: #7f6a7e;
+        }
+
+        .note {
+            font-size: 0.95rem;
+            color: #8a7188;
+            margin-top: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                padding: 22px;
+            }
+
+            h1 {
+                font-size: 2.1rem;
+            }
+
+            .buttons {
+                flex-direction: column;
+                gap: 16px;
+                min-height: 140px;
+            }
         }
     </style>
 </head>
@@ -174,10 +211,11 @@
         <p class="subtitle">Notre petite princesse et moi avons une question très importante pour toi…</p>
         <div class="buttons" id="button-container">
             <button class="btn btn-yes" id="yes-button">Oui</button>
-            <button class="btn btn-no" id="no-button">Non</button>
+            <button class="btn btn-no" id="no-button">Pas question</button>
         </div>
+        <p class="note">Astuce : attrape le «&nbsp;Non&nbsp;» si tu peux.</p>
         <!-- Celebration overlay -->
-        <div id="celebration">
+        <div id="celebration" role="dialog" aria-live="polite" aria-label="Célébration">
             <h2>Félicitations&nbsp;!</h2>
             <p>Tu as dit oui&nbsp;! Nous t’aimons plus que tout. ❤️</p>
         </div>
@@ -192,16 +230,21 @@
         const celebration = document.getElementById('celebration');
         const confettiContainer = document.getElementById('confetti');
 
-        // Move the 'Non' button away when mouse enters its area
-        noButton.addEventListener('mouseover', function(event) {
-            // Random offsets within the card boundaries
+        function moveNoButton() {
             const containerRect = buttonContainer.getBoundingClientRect();
-            const maxX = containerRect.width - noButton.offsetWidth;
-            const maxY = containerRect.height - noButton.offsetHeight;
-            const randomX = Math.floor(Math.random() * maxX) - maxX / 2;
-            const randomY = Math.floor(Math.random() * 60) - 30; // small vertical offset
-            noButton.style.transform = `translate(${randomX}px, ${randomY}px)`;
-        });
+            const buttonRect = noButton.getBoundingClientRect();
+            const padding = 12;
+            const maxX = containerRect.width - buttonRect.width - padding * 2;
+            const maxY = containerRect.height - buttonRect.height - padding * 2;
+            const randomX = Math.random() * maxX + padding;
+            const randomY = Math.random() * maxY + padding;
+            noButton.style.transform = `translate(${randomX - buttonRect.width / 2}px, ${randomY - buttonRect.height / 2}px)`;
+        }
+
+        // Move the 'Non' button away on hover and on tap/click (mobile friendly)
+        noButton.addEventListener('mouseover', moveNoButton);
+        noButton.addEventListener('touchstart', moveNoButton, { passive: true });
+        noButton.addEventListener('click', moveNoButton);
 
         // Reset 'Non' button position when mouse leaves button container
         buttonContainer.addEventListener('mouseleave', function() {
