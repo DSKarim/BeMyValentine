@@ -25,14 +25,15 @@
         /* Container for the content */
         .card {
             position: relative;
-            background-color: rgba(255, 255, 255, 0.85);
-            border-radius: 18px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-            max-width: 640px;
+            background: rgba(255, 255, 255, 0.88);
+            border-radius: 22px;
+            box-shadow: 0 18px 40px rgba(90, 65, 92, 0.16);
+            max-width: 680px;
             width: 90%;
-            padding: 28px;
+            padding: 32px;
             text-align: center;
             backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
         }
 
         /* Decorative header image */
@@ -40,18 +41,19 @@
             max-width: 100%;
             height: auto;
             border-radius: 14px;
+            box-shadow: 0 10px 25px rgba(90, 65, 92, 0.12);
         }
 
         h1 {
             font-family: 'Dancing Script', cursive;
-            font-size: 2.4rem;
-            margin: 18px 0 12px;
+            font-size: clamp(2.2rem, 4vw, 2.8rem);
+            margin: 20px 0 10px;
             color: #b37ab4;
         }
 
         p.subtitle {
-            font-size: 1.05rem;
-            margin-bottom: 24px;
+            font-size: clamp(1rem, 2.4vw, 1.2rem);
+            margin-bottom: 26px;
             color: #7f6a7e;
         }
 
@@ -59,22 +61,25 @@
         .buttons {
             display: flex;
             justify-content: center;
-            gap: 30px;
-            margin-top: 10px;
-            min-height: 80px;
+            gap: 24px;
+            margin-top: 14px;
+            min-height: 92px;
             position: relative;
             align-items: center;
+            padding: 8px 0;
+            min-width: 260px;
         }
 
         .btn {
             cursor: pointer;
-            padding: 15px 30px;
-            font-size: 1.2rem;
+            padding: 14px 34px;
+            font-size: 1.15rem;
             border: none;
             border-radius: 50px;
-            transition: transform 0.3s ease, background-color 0.3s ease;
+            transition: transform 0.2s ease, background-color 0.3s ease, box-shadow 0.3s ease;
             font-family: inherit;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 10px 18px rgba(90, 65, 92, 0.15);
+            min-width: 160px;
         }
 
         .btn-yes {
@@ -85,12 +90,16 @@
         .btn-yes:hover {
             background-color: #fddde8;
             transform: translateY(-2px);
+            box-shadow: 0 12px 20px rgba(179, 122, 180, 0.2);
         }
 
         .btn-no {
             background-color: #d3d9ef;
             color: #4c5476;
-            position: relative;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
         }
 
         .btn-no:hover {
@@ -184,19 +193,39 @@
             margin-top: 16px;
         }
 
+        @media (max-width: 900px) {
+            body {
+                padding: 18px;
+            }
+        }
+
         @media (max-width: 600px) {
             .card {
-                padding: 22px;
+                padding: 22px 18px;
             }
 
             h1 {
-                font-size: 2.1rem;
+                font-size: 2rem;
             }
 
             .buttons {
                 flex-direction: column;
-                gap: 16px;
-                min-height: 140px;
+                gap: 14px;
+                min-height: 180px;
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 260px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .btn,
+            .heart {
+                animation: none !important;
+                transition: none !important;
             }
         }
     </style>
@@ -213,7 +242,7 @@
             <button class="btn btn-yes" id="yes-button">Oui</button>
             <button class="btn btn-no" id="no-button">Pas question</button>
         </div>
-        <p class="note">Astuce : attrape le «&nbsp;Non&nbsp;» si tu peux.</p>
+        <p class="note">Astuce : le «&nbsp;Non&nbsp;» est bien trop timide pour être attrapé.</p>
         <!-- Celebration overlay -->
         <div id="celebration" role="dialog" aria-live="polite" aria-label="Célébration">
             <h2>Félicitations&nbsp;!</h2>
@@ -233,33 +262,50 @@
         function moveNoButton() {
             const containerRect = buttonContainer.getBoundingClientRect();
             const buttonRect = noButton.getBoundingClientRect();
-            const padding = 12;
+            const padding = 14;
             const maxX = containerRect.width - buttonRect.width - padding * 2;
             const maxY = containerRect.height - buttonRect.height - padding * 2;
             const randomX = Math.random() * maxX + padding;
             const randomY = Math.random() * maxY + padding;
-            noButton.style.transform = `translate(${randomX - buttonRect.width / 2}px, ${randomY - buttonRect.height / 2}px)`;
+            noButton.style.left = `${randomX}px`;
+            noButton.style.top = `${randomY}px`;
+            noButton.style.transform = 'translate(0, 0)';
         }
 
-        // Move the 'Non' button away on hover and on tap/click (mobile friendly)
-        noButton.addEventListener('mouseover', moveNoButton);
+        function handleYesClick() {
+            buttonContainer.style.display = 'none';
+            celebration.style.display = 'flex';
+            launchHearts();
+        }
+
+        function convertNoToYes() {
+            noButton.textContent = 'Oui';
+            noButton.classList.remove('btn-no');
+            noButton.classList.add('btn-yes');
+            noButton.style.position = 'relative';
+            noButton.style.left = 'auto';
+            noButton.style.top = 'auto';
+            noButton.style.transform = 'none';
+        }
+
+        // Move the 'Non' button away on hover/touch/pointer (mobile friendly)
+        noButton.addEventListener('mouseenter', moveNoButton);
+        noButton.addEventListener('pointerdown', moveNoButton);
         noButton.addEventListener('touchstart', moveNoButton, { passive: true });
-        noButton.addEventListener('click', moveNoButton);
+        noButton.addEventListener('click', () => {
+            convertNoToYes();
+            handleYesClick();
+        });
 
         // Reset 'Non' button position when mouse leaves button container
         buttonContainer.addEventListener('mouseleave', function() {
-            noButton.style.transform = '';
+            noButton.style.left = '50%';
+            noButton.style.top = '50%';
+            noButton.style.transform = 'translate(-50%, -50%)';
         });
 
         // 'Yes' button behavior: show celebration with confetti hearts
-        yesButton.addEventListener('click', function() {
-            // Hide buttons
-            buttonContainer.style.display = 'none';
-            // Show celebration message
-            celebration.style.display = 'flex';
-            // Launch confetti hearts
-            launchHearts();
-        });
+        yesButton.addEventListener('click', handleYesClick);
 
         function launchHearts() {
             // Create hearts at random intervals
