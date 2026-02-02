@@ -108,7 +108,7 @@
         }
 
         .btn:focus-visible {
-            outline: 3px solid rgba(179, 122, 180, 0.4);
+            outline: 3px solid #965f97;
             outline-offset: 3px;
         }
 
@@ -276,6 +276,14 @@
         function handleYesClick() {
             buttonContainer.style.display = 'none';
             celebration.style.display = 'flex';
+
+            // Focus management for accessibility
+            const heading = celebration.querySelector('h2');
+            if (heading) {
+                heading.setAttribute('tabindex', '-1');
+                heading.focus();
+            }
+
             launchHearts();
         }
 
@@ -295,7 +303,8 @@
         noButton.addEventListener('touchstart', moveNoButton, { passive: true });
         noButton.addEventListener('click', () => {
             convertNoToYes();
-            handleYesClick();
+            // Add a small delay so the user can see the transformation
+            setTimeout(handleYesClick, 600);
         });
 
         // Reset 'Non' button position when mouse leaves button container
