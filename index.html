@@ -103,11 +103,30 @@
             left: 68%;
             top: 50%;
             transform: translate(-50%, -50%);
-            transition: left 0.35s ease, top 0.35s ease, transform 0.35s ease;
+            transition: left 0.2s ease, top 0.2s ease, transform 0.2s ease;
         }
 
         .btn-no:hover {
             background-color: #e5e9f8;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+            25% { transform: translate(-50%, -50%) rotate(-15deg); }
+            75% { transform: translate(-50%, -50%) rotate(15deg); }
+        }
+        @keyframes grow {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+        }
+        @keyframes tilt {
+            0%, 100% { transform: translate(-50%, -50%) skew(0deg); }
+            25% { transform: translate(-50%, -50%) skew(20deg); }
+            75% { transform: translate(-50%, -50%) skew(-20deg); }
         }
 
         .btn:focus-visible {
@@ -276,7 +295,20 @@
         const celebration = document.getElementById('celebration');
         const confettiContainer = document.getElementById('confetti');
 
+        const texts = ['Pas question', 'Jamais !', 'Raté !', 'Oups !', 'Trop lent !', 'Bien essayé !', 'Nope !'];
+        const animations = ['spin', 'shake', 'grow', 'tilt'];
+
         function moveNoButton() {
+            // Pick random text
+            const randomText = texts[Math.floor(Math.random() * texts.length)];
+            noButton.textContent = randomText;
+
+            // Pick random animation
+            const randomAnim = animations[Math.floor(Math.random() * animations.length)];
+            noButton.style.animation = 'none';
+            noButton.offsetHeight; /* trigger reflow */
+            noButton.style.animation = `${randomAnim} 0.5s`;
+
             const containerRect = buttonContainer.getBoundingClientRect();
             const buttonRect = noButton.getBoundingClientRect();
             const padding = 14;
@@ -284,9 +316,9 @@
             const maxY = Math.max(containerRect.height - buttonRect.height - padding * 2, 0);
             const randomX = Math.random() * maxX + padding;
             const randomY = Math.random() * maxY + padding;
-            noButton.style.left = `${randomX}px`;
-            noButton.style.top = `${randomY}px`;
-            noButton.style.transform = 'translate(0, 0)';
+            noButton.style.left = `${randomX + buttonRect.width / 2}px`;
+            noButton.style.top = `${randomY + buttonRect.height / 2}px`;
+            noButton.style.transform = 'translate(-50%, -50%)';
         }
 
         function handleYesClick() {
