@@ -28,7 +28,7 @@
             background: rgba(255, 255, 255, 0.75);
             border-radius: 22px;
             box-shadow: 0 18px 40px rgba(90, 65, 92, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.6);
-            max-width: 680px;
+            max-width: 900px;
             width: 90%;
             padding: 32px;
             text-align: center;
@@ -264,6 +264,97 @@
                 transition: none !important;
             }
         }
+
+        /* Customization UI */
+        #customize-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            opacity: 0.3;
+            transition: opacity 0.3s;
+            z-index: 90;
+        }
+        #customize-btn:hover {
+            opacity: 1;
+        }
+
+        #customization-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 14px;
+            max-width: 500px;
+            width: 90%;
+            text-align: left;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            color: #b37ab4;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.9rem;
+            color: #5a415c;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .btn-modal {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-close {
+            background: #eee;
+            color: #333;
+        }
+        .btn-generate {
+            background: #b37ab4;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -287,7 +378,116 @@
     </div>
     <!-- Confetti hearts container -->
     <div id="confetti"></div>
+
+    <!-- Customization UI -->
+    <button id="customize-btn" aria-label="Personnaliser">⚙️</button>
+
+    <div id="customization-modal">
+        <div class="modal-content">
+            <h3>Personnaliser la carte</h3>
+            <div class="form-group">
+                <label for="input-title">Titre</label>
+                <input type="text" id="input-title" placeholder="Veux-tu être ma Valentine ?">
+            </div>
+            <div class="form-group">
+                <label for="input-subtitle">Sous-titre</label>
+                <input type="text" id="input-subtitle" placeholder="Petite phrase d'intro...">
+            </div>
+            <div class="form-group">
+                <label for="input-image">URL de l'image (optionnel)</label>
+                <input type="text" id="input-image" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label for="input-yes">Texte Bouton Oui</label>
+                <input type="text" id="input-yes" placeholder="Oui">
+            </div>
+            <div class="form-group">
+                <label for="input-no">Texte Bouton Non</label>
+                <input type="text" id="input-no" placeholder="Pas question">
+            </div>
+            <div class="form-group">
+                <label for="output-url">Lien généré</label>
+                <input type="text" id="output-url" readonly>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-close" id="modal-close">Fermer</button>
+                <button class="btn-modal btn-generate" id="modal-generate">Générer le lien</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Customization Logic
+        function applyCustomizations() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('title')) document.querySelector('h1').textContent = params.get('title');
+            if (params.has('subtitle')) document.querySelector('.subtitle').textContent = params.get('subtitle');
+            if (params.has('image')) document.querySelector('.banner img').src = params.get('image');
+            if (params.has('yes')) document.getElementById('yes-button').textContent = params.get('yes');
+            if (params.has('no')) {
+                const noBtn = document.getElementById('no-button');
+                noBtn.textContent = params.get('no');
+            }
+        }
+
+        applyCustomizations();
+
+        const customizeBtn = document.getElementById('customize-btn');
+        const modal = document.getElementById('customization-modal');
+        const modalClose = document.getElementById('modal-close');
+        const modalGenerate = document.getElementById('modal-generate');
+        const outputUrl = document.getElementById('output-url');
+
+        // Inputs
+        const inputTitle = document.getElementById('input-title');
+        const inputSubtitle = document.getElementById('input-subtitle');
+        const inputImage = document.getElementById('input-image');
+        const inputYes = document.getElementById('input-yes');
+        const inputNo = document.getElementById('input-no');
+
+        if (customizeBtn) {
+            customizeBtn.addEventListener('click', () => {
+                // Pre-fill
+                inputTitle.value = document.querySelector('h1').textContent;
+                inputSubtitle.value = document.querySelector('.subtitle').textContent;
+                inputImage.value = document.querySelector('.banner img').src;
+                inputYes.value = document.getElementById('yes-button').textContent;
+                inputNo.value = document.getElementById('no-button').textContent;
+
+                modal.style.display = 'flex';
+            });
+        }
+
+        if (modalClose) {
+            modalClose.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+        }
+
+        if (modalGenerate) {
+            modalGenerate.addEventListener('click', () => {
+                const params = new URLSearchParams();
+                if (inputTitle.value) params.set('title', inputTitle.value);
+                if (inputSubtitle.value) params.set('subtitle', inputSubtitle.value);
+                if (inputImage.value) params.set('image', inputImage.value);
+                if (inputYes.value) params.set('yes', inputYes.value);
+                if (inputNo.value) params.set('no', inputNo.value);
+
+                const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+                outputUrl.value = url;
+                outputUrl.select();
+            });
+        }
+
+        // Close modal when clicking outside
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+
         // 'Non' button behavior: flee the cursor
         const noButton = document.getElementById('no-button');
         const yesButton = document.getElementById('yes-button');
