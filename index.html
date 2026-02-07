@@ -453,8 +453,24 @@
                 <input type="text" id="input-celebration-body" placeholder="Tu as dit oui ! ...">
             </div>
             <div class="form-group">
-                <label for="input-celebration-photo">URL de la photo (optionnel)</label>
+                <label for="input-celebration-photo">URL de la photo 1 (optionnel)</label>
                 <input type="text" id="input-celebration-photo" placeholder="https://... (Ex: photo couple)">
+            </div>
+            <div class="form-group">
+                <label for="input-celebration-photo-2">URL de la photo 2 (optionnel)</label>
+                <input type="text" id="input-celebration-photo-2" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label for="input-celebration-photo-3">URL de la photo 3 (optionnel)</label>
+                <input type="text" id="input-celebration-photo-3" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label for="input-celebration-photo-4">URL de la photo 4 (optionnel)</label>
+                <input type="text" id="input-celebration-photo-4" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label for="input-celebration-photo-5">URL de la photo 5 (optionnel)</label>
+                <input type="text" id="input-celebration-photo-5" placeholder="https://...">
             </div>
 
             <h4>Partage</h4>
@@ -480,7 +496,7 @@
         // State & Default Config
         let fleeingTexts = ['Pas question', 'Jamais !', 'Raté !', 'Oups !', 'Trop lent !', 'Bien essayé !', 'Nope !'];
         let currentNoText = noButton.textContent;
-        let celebrationPhotoUrl = null;
+        let celebrationPhotoUrls = [];
         const animations = ['spin', 'shake', 'grow', 'tilt'];
 
         // Customization Logic
@@ -569,7 +585,12 @@
 
             if (params.has('celebrationTitle')) document.querySelector('#celebration h2').textContent = params.get('celebrationTitle');
             if (params.has('celebrationBody')) document.querySelector('#celebration p').textContent = params.get('celebrationBody');
-            if (params.has('celebrationPhoto')) celebrationPhotoUrl = params.get('celebrationPhoto');
+
+            celebrationPhotoUrls = [];
+            if (params.has('celebrationPhoto')) celebrationPhotoUrls.push(params.get('celebrationPhoto'));
+            for (let i = 2; i <= 5; i++) {
+                if (params.has('celebrationPhoto' + i)) celebrationPhotoUrls.push(params.get('celebrationPhoto' + i));
+            }
         }
 
         applyCustomizations();
@@ -591,7 +612,11 @@
         const inputFleeing = document.getElementById('input-fleeing');
         const inputCelebTitle = document.getElementById('input-celebration-title');
         const inputCelebBody = document.getElementById('input-celebration-body');
-        const inputCelebPhoto = document.getElementById('input-celebration-photo');
+        const inputCelebPhoto1 = document.getElementById('input-celebration-photo');
+        const inputCelebPhoto2 = document.getElementById('input-celebration-photo-2');
+        const inputCelebPhoto3 = document.getElementById('input-celebration-photo-3');
+        const inputCelebPhoto4 = document.getElementById('input-celebration-photo-4');
+        const inputCelebPhoto5 = document.getElementById('input-celebration-photo-5');
 
         // Live Preview Helper
         function bindPreview(input, selector, property = 'textContent') {
@@ -624,11 +649,15 @@
         bindPreview(inputCelebTitle, '#celebration h2');
         bindPreview(inputCelebBody, '#celebration p');
 
-        if (inputCelebPhoto) {
-            inputCelebPhoto.addEventListener('input', () => {
-                celebrationPhotoUrl = inputCelebPhoto.value;
-            });
-        }
+        // Update celebrationPhotoUrls array when any photo input changes
+        const photoInputs = [inputCelebPhoto1, inputCelebPhoto2, inputCelebPhoto3, inputCelebPhoto4, inputCelebPhoto5];
+        photoInputs.forEach((input, index) => {
+            if (input) {
+                input.addEventListener('input', () => {
+                   celebrationPhotoUrls = photoInputs.map(inp => inp ? inp.value : '').filter(v => v);
+                });
+            }
+        });
 
         if (customizeBtn) {
             customizeBtn.addEventListener('click', () => {
@@ -646,7 +675,14 @@
 
                 inputCelebTitle.value = document.querySelector('#celebration h2').textContent;
                 inputCelebBody.value = document.querySelector('#celebration p').textContent;
-                inputCelebPhoto.value = celebrationPhotoUrl || '';
+
+                // Populate photo inputs
+                const urls = celebrationPhotoUrls || [];
+                if (inputCelebPhoto1) inputCelebPhoto1.value = urls[0] || '';
+                if (inputCelebPhoto2) inputCelebPhoto2.value = urls[1] || '';
+                if (inputCelebPhoto3) inputCelebPhoto3.value = urls[2] || '';
+                if (inputCelebPhoto4) inputCelebPhoto4.value = urls[3] || '';
+                if (inputCelebPhoto5) inputCelebPhoto5.value = urls[4] || '';
 
                 modal.style.display = 'flex';
             });
@@ -670,7 +706,12 @@
                 if (inputFleeing.value) params.set('fleeing', inputFleeing.value);
                 if (inputCelebTitle.value) params.set('celebrationTitle', inputCelebTitle.value);
                 if (inputCelebBody.value) params.set('celebrationBody', inputCelebBody.value);
-                if (inputCelebPhoto.value) params.set('celebrationPhoto', inputCelebPhoto.value);
+
+                if (inputCelebPhoto1 && inputCelebPhoto1.value) params.set('celebrationPhoto', inputCelebPhoto1.value);
+                if (inputCelebPhoto2 && inputCelebPhoto2.value) params.set('celebrationPhoto2', inputCelebPhoto2.value);
+                if (inputCelebPhoto3 && inputCelebPhoto3.value) params.set('celebrationPhoto3', inputCelebPhoto3.value);
+                if (inputCelebPhoto4 && inputCelebPhoto4.value) params.set('celebrationPhoto4', inputCelebPhoto4.value);
+                if (inputCelebPhoto5 && inputCelebPhoto5.value) params.set('celebrationPhoto5', inputCelebPhoto5.value);
 
                 const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
                 outputUrl.value = url;
@@ -717,8 +758,8 @@
                 heading.focus();
             }
             launchHearts();
-            if (celebrationPhotoUrl) {
-                startBouncingPhoto(celebrationPhotoUrl);
+            if (celebrationPhotoUrls && celebrationPhotoUrls.length > 0) {
+                celebrationPhotoUrls.forEach(url => startBouncingPhoto(url));
             }
         }
 
