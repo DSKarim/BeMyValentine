@@ -307,6 +307,8 @@
             border-radius: 14px;
             max-width: 500px;
             width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
             text-align: left;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
@@ -315,6 +317,14 @@
             margin-top: 0;
             color: #b37ab4;
             font-family: 'Playfair Display', serif;
+        }
+
+        .modal-content h4 {
+            margin: 16px 0 8px;
+            color: #5a415c;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 4px;
+            font-size: 1rem;
         }
 
         .form-group {
@@ -385,6 +395,8 @@
     <div id="customization-modal">
         <div class="modal-content">
             <h3>Personnaliser la carte</h3>
+
+            <h4>Général</h4>
             <div class="form-group">
                 <label for="input-title">Titre</label>
                 <input type="text" id="input-title" placeholder="Veux-tu être ma Valentine ?">
@@ -394,17 +406,39 @@
                 <input type="text" id="input-subtitle" placeholder="Petite phrase d'intro...">
             </div>
             <div class="form-group">
+                <label for="input-note">Note de bas de page</label>
+                <input type="text" id="input-note" placeholder="Astuce : ...">
+            </div>
+            <div class="form-group">
                 <label for="input-image">URL de l'image (optionnel)</label>
                 <input type="text" id="input-image" placeholder="https://...">
             </div>
+
+            <h4>Boutons</h4>
             <div class="form-group">
                 <label for="input-yes">Texte Bouton Oui</label>
                 <input type="text" id="input-yes" placeholder="Oui">
             </div>
             <div class="form-group">
-                <label for="input-no">Texte Bouton Non</label>
+                <label for="input-no">Texte Bouton Non (Initial)</label>
                 <input type="text" id="input-no" placeholder="Pas question">
             </div>
+            <div class="form-group">
+                <label for="input-fleeing">Textes fuyants (séparés par des virgules)</label>
+                <input type="text" id="input-fleeing" placeholder="Pas question, Jamais, Raté...">
+            </div>
+
+            <h4>Célébration</h4>
+            <div class="form-group">
+                <label for="input-celebration-title">Titre Célébration</label>
+                <input type="text" id="input-celebration-title" placeholder="Félicitations !">
+            </div>
+            <div class="form-group">
+                <label for="input-celebration-body">Message Célébration</label>
+                <input type="text" id="input-celebration-body" placeholder="Tu as dit oui ! ...">
+            </div>
+
+            <h4>Partage</h4>
             <div class="form-group">
                 <label for="output-url">Lien généré</label>
                 <input type="text" id="output-url" readonly>
@@ -417,21 +451,47 @@
     </div>
 
     <script>
+        // DOM Elements
+        const noButton = document.getElementById('no-button');
+        const yesButton = document.getElementById('yes-button');
+        const buttonContainer = document.getElementById('button-container');
+        const celebration = document.getElementById('celebration');
+        const confettiContainer = document.getElementById('confetti');
+
+        // State & Default Config
+        let fleeingTexts = ['Pas question', 'Jamais !', 'Raté !', 'Oups !', 'Trop lent !', 'Bien essayé !', 'Nope !'];
+        let currentNoText = noButton.textContent;
+        const animations = ['spin', 'shake', 'grow', 'tilt'];
+
         // Customization Logic
         function applyCustomizations() {
             const params = new URLSearchParams(window.location.search);
+
             if (params.has('title')) document.querySelector('h1').textContent = params.get('title');
             if (params.has('subtitle')) document.querySelector('.subtitle').textContent = params.get('subtitle');
+            if (params.has('note')) document.querySelector('.note').textContent = params.get('note');
             if (params.has('image')) document.querySelector('.banner img').src = params.get('image');
-            if (params.has('yes')) document.getElementById('yes-button').textContent = params.get('yes');
+
+            if (params.has('yes')) yesButton.textContent = params.get('yes');
             if (params.has('no')) {
-                const noBtn = document.getElementById('no-button');
-                noBtn.textContent = params.get('no');
+                currentNoText = params.get('no');
+                noButton.textContent = currentNoText;
+            } else {
+                currentNoText = noButton.textContent;
             }
+
+            if (params.has('fleeing')) {
+                const ft = params.get('fleeing').split(',').map(t => t.trim()).filter(t => t);
+                if (ft.length > 0) fleeingTexts = ft;
+            }
+
+            if (params.has('celebrationTitle')) document.querySelector('#celebration h2').textContent = params.get('celebrationTitle');
+            if (params.has('celebrationBody')) document.querySelector('#celebration p').textContent = params.get('celebrationBody');
         }
 
         applyCustomizations();
 
+        // Customization Modal & Live Preview
         const customizeBtn = document.getElementById('customize-btn');
         const modal = document.getElementById('customization-modal');
         const modalClose = document.getElementById('modal-close');
@@ -441,18 +501,61 @@
         // Inputs
         const inputTitle = document.getElementById('input-title');
         const inputSubtitle = document.getElementById('input-subtitle');
+        const inputNote = document.getElementById('input-note');
         const inputImage = document.getElementById('input-image');
         const inputYes = document.getElementById('input-yes');
         const inputNo = document.getElementById('input-no');
+        const inputFleeing = document.getElementById('input-fleeing');
+        const inputCelebTitle = document.getElementById('input-celebration-title');
+        const inputCelebBody = document.getElementById('input-celebration-body');
+
+        // Live Preview Helper
+        function bindPreview(input, selector, property = 'textContent') {
+            if (!input) return;
+            input.addEventListener('input', () => {
+                const val = input.value;
+                if (selector) {
+                    const el = document.querySelector(selector);
+                    if (el) el[property] = val;
+                }
+                // Update state variables if needed
+                if (input === inputNo) {
+                    currentNoText = val;
+                    noButton.textContent = val;
+                }
+                if (input === inputFleeing) {
+                    const ft = val.split(',').map(t => t.trim()).filter(t => t);
+                    if (ft.length > 0) fleeingTexts = ft;
+                }
+            });
+        }
+
+        bindPreview(inputTitle, 'h1');
+        bindPreview(inputSubtitle, '.subtitle');
+        bindPreview(inputNote, '.note');
+        bindPreview(inputImage, '.banner img', 'src');
+        bindPreview(inputYes, '#yes-button');
+        bindPreview(inputNo, '#no-button'); // Also updates currentNoText
+        bindPreview(inputFleeing, null); // Just updates variable
+        bindPreview(inputCelebTitle, '#celebration h2');
+        bindPreview(inputCelebBody, '#celebration p');
 
         if (customizeBtn) {
             customizeBtn.addEventListener('click', () => {
-                // Pre-fill
+                // Populate inputs from current DOM
                 inputTitle.value = document.querySelector('h1').textContent;
                 inputSubtitle.value = document.querySelector('.subtitle').textContent;
-                inputImage.value = document.querySelector('.banner img').src;
-                inputYes.value = document.getElementById('yes-button').textContent;
-                inputNo.value = document.getElementById('no-button').textContent;
+                inputNote.value = document.querySelector('.note').textContent;
+
+                const img = document.querySelector('.banner img');
+                inputImage.value = img.getAttribute('src') || img.src;
+
+                inputYes.value = yesButton.textContent;
+                inputNo.value = currentNoText; // Use the base text, not currently random one
+                inputFleeing.value = fleeingTexts.join(', ');
+
+                inputCelebTitle.value = document.querySelector('#celebration h2').textContent;
+                inputCelebBody.value = document.querySelector('#celebration p').textContent;
 
                 modal.style.display = 'flex';
             });
@@ -469,9 +572,13 @@
                 const params = new URLSearchParams();
                 if (inputTitle.value) params.set('title', inputTitle.value);
                 if (inputSubtitle.value) params.set('subtitle', inputSubtitle.value);
+                if (inputNote.value) params.set('note', inputNote.value);
                 if (inputImage.value) params.set('image', inputImage.value);
                 if (inputYes.value) params.set('yes', inputYes.value);
                 if (inputNo.value) params.set('no', inputNo.value);
+                if (inputFleeing.value) params.set('fleeing', inputFleeing.value);
+                if (inputCelebTitle.value) params.set('celebrationTitle', inputCelebTitle.value);
+                if (inputCelebBody.value) params.set('celebrationBody', inputCelebBody.value);
 
                 const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
                 outputUrl.value = url;
@@ -479,34 +586,21 @@
             });
         }
 
-        // Close modal when clicking outside
         if (modal) {
             modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.style.display = 'none';
-                }
+                if (e.target === modal) modal.style.display = 'none';
             });
         }
 
-        // 'Non' button behavior: flee the cursor
-        const noButton = document.getElementById('no-button');
-        const yesButton = document.getElementById('yes-button');
-        const buttonContainer = document.getElementById('button-container');
-        const celebration = document.getElementById('celebration');
-        const confettiContainer = document.getElementById('confetti');
-
-        const texts = ['Pas question', 'Jamais !', 'Raté !', 'Oups !', 'Trop lent !', 'Bien essayé !', 'Nope !'];
-        const animations = ['spin', 'shake', 'grow', 'tilt'];
-
+        // Gameplay Logic
         function moveNoButton() {
-            // Pick random text
-            const randomText = texts[Math.floor(Math.random() * texts.length)];
+            const list = (fleeingTexts && fleeingTexts.length > 0) ? fleeingTexts : ['Pas question'];
+            const randomText = list[Math.floor(Math.random() * list.length)];
             noButton.textContent = randomText;
 
-            // Pick random animation
             const randomAnim = animations[Math.floor(Math.random() * animations.length)];
             noButton.style.animation = 'none';
-            noButton.offsetHeight; /* trigger reflow */
+            noButton.offsetHeight;
             noButton.style.animation = `${randomAnim} 0.5s`;
 
             const containerRect = buttonContainer.getBoundingClientRect();
@@ -516,6 +610,7 @@
             const maxY = Math.max(containerRect.height - buttonRect.height - padding * 2, 0);
             const randomX = Math.random() * maxX + padding;
             const randomY = Math.random() * maxY + padding;
+
             noButton.style.left = `${randomX + buttonRect.width / 2}px`;
             noButton.style.top = `${randomY + buttonRect.height / 2}px`;
             noButton.style.transform = 'translate(-50%, -50%)';
@@ -524,19 +619,16 @@
         function handleYesClick() {
             buttonContainer.style.display = 'none';
             celebration.style.display = 'flex';
-
-            // Focus management for accessibility
             const heading = celebration.querySelector('h2');
             if (heading) {
                 heading.setAttribute('tabindex', '-1');
                 heading.focus();
             }
-
             launchHearts();
         }
 
         function convertNoToYes() {
-            noButton.textContent = 'Oui';
+            noButton.textContent = yesButton.textContent;
             noButton.classList.remove('btn-no');
             noButton.classList.add('btn-yes');
             noButton.style.position = 'relative';
@@ -545,46 +637,40 @@
             noButton.style.transform = 'none';
         }
 
-        // Move the 'Non' button away on hover/touch/pointer (mobile friendly)
         noButton.addEventListener('mouseenter', moveNoButton);
         noButton.addEventListener('pointerdown', moveNoButton);
         noButton.addEventListener('touchstart', moveNoButton, { passive: true });
         noButton.addEventListener('click', () => {
             convertNoToYes();
-            // Add a small delay so the user can see the transformation
             setTimeout(handleYesClick, 600);
         });
 
-        // Reset 'Non' button position when mouse leaves button container
         buttonContainer.addEventListener('mouseleave', function() {
             noButton.style.left = noButton.dataset.defaultLeft || '68%';
             noButton.style.top = noButton.dataset.defaultTop || '50%';
             noButton.style.transform = 'translate(-50%, -50%)';
+            // Reset text to initial (customized) value
+            noButton.textContent = currentNoText;
         });
 
-        // 'Yes' button behavior: show celebration with confetti hearts
         yesButton.addEventListener('click', handleYesClick);
 
         function launchHearts() {
-            // Create hearts at random intervals
             const heartInterval = setInterval(() => {
                 const heart = document.createElement('div');
                 heart.classList.add('heart');
-                // Randomize heart color among pastel shades
                 const colors = ['#F7ACC0', '#FBC8D6', '#E6C3F7', '#C7DDF9', '#FDE2E4'];
                 heart.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                const size = Math.random() * 20 + 10; // size between 10 and 30px
+                const size = Math.random() * 20 + 10;
                 heart.style.width = `${size}px`;
                 heart.style.height = `${size}px`;
                 heart.style.left = `${Math.random() * 100}%`;
                 heart.style.animationDuration = `${Math.random() * 2 + 3}s`;
                 confettiContainer.appendChild(heart);
-                // Remove heart after animation ends
                 setTimeout(() => {
                     confettiContainer.removeChild(heart);
                 }, 5000);
             }, 200);
-            // Stop after a certain time
             setTimeout(() => clearInterval(heartInterval), 8000);
         }
     </script>
