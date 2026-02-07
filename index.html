@@ -365,6 +365,21 @@
             background: #b37ab4;
             color: white;
         }
+
+        .bouncing-photo {
+            position: fixed;
+            max-width: 250px;
+            max-height: 250px;
+            width: auto;
+            height: auto;
+            border: 10px solid #fff;
+            border-bottom: 35px solid #fff; /* Polaroid style */
+            box-shadow: 0 10px 30px rgba(90, 65, 92, 0.4);
+            border-radius: 4px;
+            z-index: 2000; /* On top of everything */
+            pointer-events: none;
+            will-change: transform;
+        }
     </style>
 </head>
 <body>
@@ -437,6 +452,10 @@
                 <label for="input-celebration-body">Message Célébration</label>
                 <input type="text" id="input-celebration-body" placeholder="Tu as dit oui ! ...">
             </div>
+            <div class="form-group">
+                <label for="input-celebration-photo">URL de la photo (optionnel)</label>
+                <input type="text" id="input-celebration-photo" placeholder="https://... (Ex: photo couple)">
+            </div>
 
             <h4>Partage</h4>
             <div class="form-group">
@@ -461,9 +480,72 @@
         // State & Default Config
         let fleeingTexts = ['Pas question', 'Jamais !', 'Raté !', 'Oups !', 'Trop lent !', 'Bien essayé !', 'Nope !'];
         let currentNoText = noButton.textContent;
+        let celebrationPhotoUrl = null;
         const animations = ['spin', 'shake', 'grow', 'tilt'];
 
         // Customization Logic
+        function startBouncingPhoto(url) {
+            const img = document.createElement('img');
+            img.src = url;
+            img.classList.add('bouncing-photo');
+            document.body.appendChild(img);
+
+            let x = Math.random() * (window.innerWidth - 200);
+            let y = Math.random() * (window.innerHeight - 200);
+            let dx = 2 * (Math.random() < 0.5 ? 1 : -1);
+            let dy = 2 * (Math.random() < 0.5 ? 1 : -1);
+            let rotation = 0;
+            let dRotation = 0.5 * (Math.random() < 0.5 ? 1 : -1);
+            let animating = false;
+
+            function animate() {
+                if (!document.body.contains(img)) return;
+
+                const w = img.offsetWidth || 200;
+                const h = img.offsetHeight || 200;
+                const winW = window.innerWidth;
+                const winH = window.innerHeight;
+
+                if (x + w >= winW) {
+                     dx = -Math.abs(dx);
+                     x = winW - w;
+                } else if (x <= 0) {
+                     dx = Math.abs(dx);
+                     x = 0;
+                }
+
+                if (y + h >= winH) {
+                     dy = -Math.abs(dy);
+                     y = winH - h;
+                } else if (y <= 0) {
+                     dy = Math.abs(dy);
+                     y = 0;
+                }
+
+                x += dx;
+                y += dy;
+                rotation += dRotation;
+
+                img.style.left = x + 'px';
+                img.style.top = y + 'px';
+                img.style.transform = `rotate(${rotation}deg)`;
+
+                requestAnimationFrame(animate);
+            }
+
+            img.onload = () => {
+                if (!animating) {
+                    animating = true;
+                    animate();
+                }
+            };
+
+            if (img.complete && !animating) {
+                animating = true;
+                animate();
+            }
+        }
+
         function applyCustomizations() {
             const params = new URLSearchParams(window.location.search);
 
@@ -487,6 +569,7 @@
 
             if (params.has('celebrationTitle')) document.querySelector('#celebration h2').textContent = params.get('celebrationTitle');
             if (params.has('celebrationBody')) document.querySelector('#celebration p').textContent = params.get('celebrationBody');
+            if (params.has('celebrationPhoto')) celebrationPhotoUrl = params.get('celebrationPhoto');
         }
 
         applyCustomizations();
@@ -508,6 +591,7 @@
         const inputFleeing = document.getElementById('input-fleeing');
         const inputCelebTitle = document.getElementById('input-celebration-title');
         const inputCelebBody = document.getElementById('input-celebration-body');
+        const inputCelebPhoto = document.getElementById('input-celebration-photo');
 
         // Live Preview Helper
         function bindPreview(input, selector, property = 'textContent') {
@@ -540,6 +624,12 @@
         bindPreview(inputCelebTitle, '#celebration h2');
         bindPreview(inputCelebBody, '#celebration p');
 
+        if (inputCelebPhoto) {
+            inputCelebPhoto.addEventListener('input', () => {
+                celebrationPhotoUrl = inputCelebPhoto.value;
+            });
+        }
+
         if (customizeBtn) {
             customizeBtn.addEventListener('click', () => {
                 // Populate inputs from current DOM
@@ -556,6 +646,7 @@
 
                 inputCelebTitle.value = document.querySelector('#celebration h2').textContent;
                 inputCelebBody.value = document.querySelector('#celebration p').textContent;
+                inputCelebPhoto.value = celebrationPhotoUrl || '';
 
                 modal.style.display = 'flex';
             });
@@ -579,6 +670,7 @@
                 if (inputFleeing.value) params.set('fleeing', inputFleeing.value);
                 if (inputCelebTitle.value) params.set('celebrationTitle', inputCelebTitle.value);
                 if (inputCelebBody.value) params.set('celebrationBody', inputCelebBody.value);
+                if (inputCelebPhoto.value) params.set('celebrationPhoto', inputCelebPhoto.value);
 
                 const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
                 outputUrl.value = url;
@@ -625,6 +717,9 @@
                 heading.focus();
             }
             launchHearts();
+            if (celebrationPhotoUrl) {
+                startBouncingPhoto(celebrationPhotoUrl);
+            }
         }
 
         function convertNoToYes() {
