@@ -509,13 +509,103 @@
             if (window.innerWidth <= 600) {
                 noButton.dataset.defaultTop = '85%';
                 noButton.dataset.defaultLeft = '50%';
+                // Start auto flee on mobile if not already started
+                startAutoFlee();
             } else {
                 noButton.dataset.defaultTop = '50%';
                 noButton.dataset.defaultLeft = '68%';
+                stopAutoFlee();
+            }
+        }
+
+        let autoFleeInterval;
+        let scale = 1.0;
+        let rotation = 0;
+
+        function createTrail(x, y) {
+            const trail = document.createElement('div');
+            trail.textContent = '💨';
+            trail.style.position = 'fixed';
+            trail.style.left = x + 'px';
+            trail.style.top = y + 'px';
+            trail.style.fontSize = '24px';
+            trail.style.pointerEvents = 'none';
+            trail.style.opacity = '0.8';
+            trail.style.transition = 'opacity 0.8s ease-out, transform 0.8s ease-out';
+            trail.style.zIndex = '100';
+            document.body.appendChild(trail);
+
+            requestAnimationFrame(() => {
+                trail.style.opacity = '0';
+                trail.style.transform = 'scale(0.5) translateY(-20px)';
+            });
+
+            setTimeout(() => {
+                if (document.body.contains(trail)) document.body.removeChild(trail);
+            }, 800);
+        }
+
+        function startAutoFlee() {
+            if (autoFleeInterval) return;
+
+            // Switch to fixed positioning for full screen fleeing
+            noButton.style.position = 'fixed';
+            noButton.style.zIndex = '1000';
+            noButton.style.transition = 'all 0.5s ease-in-out';
+
+            // Set initial position to current bounding client rect to avoid jump?
+            // Or just let it jump.
+
+            autoFleeInterval = setInterval(() => {
+                // Create trail at current position
+                const rect = noButton.getBoundingClientRect();
+                createTrail(rect.left + rect.width / 2, rect.top + rect.height / 2);
+
+                // Calculate new position
+                const winW = window.innerWidth;
+                const winH = window.innerHeight;
+                const btnW = rect.width;
+                const btnH = rect.height;
+                const padding = 20;
+
+                const maxLeft = winW - btnW - padding;
+                const maxTop = winH - btnH - padding;
+
+                const newLeft = Math.max(padding, Math.random() * maxLeft);
+                const newTop = Math.max(padding, Math.random() * maxTop);
+
+                noButton.style.left = newLeft + 'px';
+                noButton.style.top = newTop + 'px';
+
+                // Shrink and Rotate
+                scale = Math.max(0.4, scale - 0.05); // Shrink
+                rotation = (Math.random() - 0.5) * 60; // Random rotation
+
+                // Funny text update
+                const list = (fleeingTexts && fleeingTexts.length > 0) ? fleeingTexts : ['Pas question'];
+                if (Math.random() > 0.6) {
+                    noButton.textContent = list[Math.floor(Math.random() * list.length)];
+                }
+
+                noButton.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
+
+            }, 700);
+        }
+
+        function stopAutoFlee() {
+            if (autoFleeInterval) {
+                clearInterval(autoFleeInterval);
+                autoFleeInterval = null;
+                // Reset styles
+                noButton.style.position = 'absolute';
+                noButton.style.zIndex = '';
+                noButton.style.transform = 'translate(-50%, -50%)';
+                scale = 1.0;
             }
         }
 
         window.addEventListener('resize', updateDefaultButtonPosition);
+        // Call immediately to check state
         updateDefaultButtonPosition();
 
         // Customization Logic
@@ -746,6 +836,10 @@
 
         // Gameplay Logic
         function moveNoButton() {
+            // If auto flee is active, don't interfere with manual moves unless we want to speed it up?
+            // Or maybe just let it be.
+            if (autoFleeInterval) return;
+
             const list = (fleeingTexts && fleeingTexts.length > 0) ? fleeingTexts : ['Pas question'];
             const randomText = list[Math.floor(Math.random() * list.length)];
             noButton.textContent = randomText;
@@ -769,8 +863,30 @@
         }
 
         function handleYesClick() {
+            // Hide other elements to clear the card
+            const banner = document.querySelector('.banner');
+            if (banner) banner.style.display = 'none';
+
+            const h1 = document.querySelector('h1');
+            if (h1) h1.style.display = 'none';
+
+            const subtitle = document.querySelector('.subtitle');
+            if (subtitle) subtitle.style.display = 'none';
+
+            const note = document.querySelector('.note');
+            if (note) note.style.display = 'none';
+
             buttonContainer.style.display = 'none';
+
+            // Show celebration with improved layout
             celebration.style.display = 'flex';
+            celebration.style.position = 'relative';
+            celebration.style.height = 'auto';
+            celebration.style.minHeight = '300px'; // Ensure reasonable height
+            celebration.style.background = 'rgba(255, 255, 255, 0.95)';
+
+            // Adjust card padding if needed, or rely on flex centering
+
             const heading = celebration.querySelector('h2');
             if (heading) {
                 heading.setAttribute('tabindex', '-1');
@@ -796,8 +912,31 @@
         noButton.addEventListener('pointerdown', moveNoButton);
         noButton.addEventListener('touchstart', moveNoButton, { passive: true });
         noButton.addEventListener('click', () => {
-            convertNoToYes();
-            setTimeout(handleYesClick, 600);
+            if (autoFleeInterval) {
+                // Mobile behavior: caught the fleeing button
+                stopAutoFlee();
+                noButton.style.display = 'none';
+
+                // Make Yes button huge and full screen
+                yesButton.style.position = 'fixed';
+                yesButton.style.top = '0';
+                yesButton.style.left = '0';
+                yesButton.style.width = '100vw';
+                yesButton.style.maxWidth = 'none'; // Override max-width constraint
+                yesButton.style.height = '100vh';
+                yesButton.style.zIndex = '2000';
+                yesButton.style.borderRadius = '0';
+                yesButton.style.fontSize = '3rem';
+                yesButton.style.display = 'flex';
+                yesButton.style.justifyContent = 'center';
+                yesButton.style.alignItems = 'center';
+                yesButton.style.transform = 'none';
+                yesButton.style.animation = 'pulse 2s infinite'; // Keep pulsing or make it steady?
+            } else {
+                // Desktop behavior
+                convertNoToYes();
+                setTimeout(handleYesClick, 600);
+            }
         });
 
         buttonContainer.addEventListener('mouseleave', function() {
