@@ -234,13 +234,18 @@
             .buttons {
                 flex-direction: column;
                 gap: 14px;
-                min-height: 180px;
+                min-height: 240px;
                 width: 100%;
             }
 
             .btn {
                 width: 100%;
                 max-width: 260px;
+            }
+
+            .btn-no {
+                top: 85%;
+                left: 50%;
             }
         }
 
@@ -498,6 +503,20 @@
         let currentNoText = noButton.textContent;
         let celebrationPhotoUrls = [];
         const animations = ['spin', 'shake', 'grow', 'tilt'];
+
+        // Responsive Mobile Logic
+        function updateDefaultButtonPosition() {
+            if (window.innerWidth <= 600) {
+                noButton.dataset.defaultTop = '85%';
+                noButton.dataset.defaultLeft = '50%';
+            } else {
+                noButton.dataset.defaultTop = '50%';
+                noButton.dataset.defaultLeft = '68%';
+            }
+        }
+
+        window.addEventListener('resize', updateDefaultButtonPosition);
+        updateDefaultButtonPosition();
 
         // Customization Logic
         function startBouncingPhoto(url) {
